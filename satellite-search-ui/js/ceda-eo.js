@@ -176,14 +176,44 @@ function getDocCount(key, aggregatedData) {
     return count
 }
 
+function getProductNode(key, aggregatedData){
+    var i,j, mode, product, resolution;
+    var node = [];
+    var modes = aggregatedData.modes.buckets
+    for (i=0; i< modes.length; i++){
+        mode = modes[i]
+        var products = mode.products.buckets
+        for (j=0; j< products.length; j++){
+            product = products[j]
+            var resolutions = product.resolutions.buckets
+            // At the moment, resolution is singular. If there is more than one resolution per product, it is a
+            // tokenised version of N/A
+            if (resolutions.length < 2){
+                resolution = '_' + resolutions[0]["key"]
+            } else {
+                resolution = ''
+            }
+            // Create the node JSON.
+            var product_name = mode.key + '_' + product.key + resolution;
+            node.push({
+                    text: product_name.toUpperCase()
+                })
+        }
 
-
-function getTreeJSON(aggregatedData, numbers) {
-    // Produces the JSON which makes up the data section for the Bootstrap treeview.
-
-    if (numbers === undefined) {
-        numbers = true
     }
+    node = node.sort(function (a,b) {
+        if (a.text < b.text)
+            return -1;
+        if (a.text > b.text)
+            return 1;
+        return 0;
+
+    })
+    return node
+}
+
+function getTreeJSON(aggregatedData) {
+    // Produces the JSON which makes up the data section for the Bootstrap treeview.
 
     var tree = [];
     var tree_buckets = aggregatedData['all'];
@@ -191,14 +221,14 @@ function getTreeJSON(aggregatedData, numbers) {
 
     // Create JSON for satellites aggregation
     if ("satellites" in tree_buckets) {
-        satellites = tree_buckets['satellites']['buckets'].sort(
-            function (a, b) {
-            if (a.key < b.key)
-                return -1;
-            if (a.key > b.key)
-                return 1;
-            return 0;
-        });
+        satellites = tree_buckets['satellites']['buckets'].sort(function (a, b) {
+                if (a.key < b.key)
+                    return -1;
+                if (a.key > b.key)
+                    return 1;
+                return 0;
+            }
+        );
 
         // Create the child JSON
         var i, j, satellite_children = [];
@@ -211,6 +241,13 @@ function getTreeJSON(aggregatedData, numbers) {
                 text: titleCase(childName),
                 tags: [doc_count]
             };
+
+            // For sentinel 1 products, need to provide selectable product nodes.
+            var reg = /Sentinel-1./i;
+            if (reg.test(child)) {
+                child_JSON.nodes = getProductNode(child, satellites[i])
+                // console.log(JSON.stringify(child_JSON))
+            }
             // push each child to the children array
             satellite_children.push(child_JSON)
         }
@@ -408,21 +445,33 @@ function updateTreeDisplay(aggregatedData, gmap) {
 
 function requestFromTree() {
     // Get the checked items in the tree to apply in the ES query.
-    var i, req = [], selection;
+    var i,j, req = [], selection;
 
     selection = $('#tree_menu').treeview('getUnselected');
+
+
     if (selection.length) {
         for (i = 0; i < selection.length; i++) {
             if (selection[i].text !== "Satellites") {
-                req.push({
-                    match: {
-                        'misc.platform.Satellite.raw': selection[i].text.split(' ')[0]
-
+                if (selection[i].parentId === 0) {
+                    req.push({
+                        match: {
+                            'misc.platform.Satellite.raw': selection[i].text.split(' ')[0]
+                        }
+                    });
+                } else {
+                    // Node is a data product, a sub-selection of the satellite mission.
+                    var params
+                    params = selection[i].text.split('_');
+                    req.push({match: {'misc.platform.Instrument Mode': params[0]}})
+                    req.push({match: {'misc.product_info.Product Type': params[1]}})
+                    if (params.length > 2){
+                        // There is a resolution parameter
+                        req.push({match: {'misc.product_info.Resolution': params[2]}})
                     }
-                });
+                }
             }
         }
-
         return req;
     }
     return '';
@@ -518,31 +567,15 @@ function esRequest(nw, se, size) {
                 }
             }
         },
-        "aggs": {
-            "data_count": {
-                "terms": {
-                    "field": "misc.platform.Satellite.raw"
-                }
-            },
-            "all": {
-                "global": {},
-                "aggs": {
-                    "satellites": {
-                        "terms": {
-                            "field": "misc.platform.Satellite.raw",
-                            "size": 30
-                        }
-                    }
-                }
-            }
-        },
+        "aggs": treeRequest().aggs,
         "size": size
     };
 }
 
-function treeRequest() {
+function treeRequest(size) {
     // Abstracts the actual request from the main active code
     // Simpler, light request just for initialising the tree.
+    // Provides the aggs section of the ES request
     return {
         "aggs": {
             "data_count": {
@@ -555,14 +588,38 @@ function treeRequest() {
                 "aggs": {
                     "satellites": {
                         "terms": {
-                            "field": "misc.platform.Satellite.raw",
-                            "size": 30
+                            "field": "misc.platform.Satellite.raw"
+                        },
+
+                        "aggs": {
+                            "modes": {
+                                "terms": {
+                                    "field": "misc.platform.Instrument Mode"
+
+                                },
+                                "aggs": {
+                                    "products": {
+                                        "terms": {
+                                            "field": "misc.product_info.Product Type"
+                                        },
+                                        "aggs": {
+                                            "resolutions": {
+                                                "terms": {
+                                                    "field": "misc.product_info.Resolution"
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+
                         }
                     }
                 }
             }
         },
-        "size": 0
+        "size": size
     };
 }
 
@@ -1307,7 +1364,7 @@ window.onload = function () {
 
             // Clear the map of objects and initialise the tree to clear the badges.
             cleanup()
-            sendElasticsearchRequest(treeRequest(), initTree, false);
+            sendElasticsearchRequest(treeRequest(0), initTree, false);
 
 
             // Check all the options in the tree and make sure they are selected.
