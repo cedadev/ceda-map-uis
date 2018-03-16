@@ -15,7 +15,7 @@ function getParameterByName(name) {
 }
 
 // Window constants
-var REQUEST_SIZE = 1000;
+var REQUEST_SIZE = 250;
 var INDEX = getParameterByName('index') || 'ceda-eo';
 var ES_URL = 'http://jasmin-es1.ceda.ac.uk/' + INDEX + '/_search';
 var TRACK_COLOURS = [
@@ -33,6 +33,8 @@ var COLOUR_MAP = {
     "landsat": "#60BD68",
     "other": "#F17CB0"
 };
+
+var lastGeom = null
 var export_modal_open = false;
 
 // -----------------------------------String-----------------------------------
@@ -63,22 +65,12 @@ String.prototype.truncatePath = function (levels) {
     return t_path;
 };
 
-// Toggle text at top of the filters panel
-function toggleText() {
-    var sliders = document.getElementsByClassName('slider')
-    for (var i = 0; i < sliders.length; i++) {
-        sliders[i].classList.toggle('closed')
-    }
-    var headerCollapse = document.getElementById('headCollapse');
-    var hCHTML = headerCollapse.innerHTML;
-    headerCollapse.innerHTML = hCHTML === 'Collapse Header' ? 'Expand Header' : 'Collapse Header'
-
-}
 
 // -----------------------------------Map--------------------------------------
 var geometries = [];
 var info_windows = [];
 var quicklooks = [];
+var results = [];
 
 function centreMap(gmap, geocoder, loc) {
     if (loc !== '') {
@@ -184,8 +176,8 @@ function drawFlightTracks(gmap, hits) {
 
     var colour_index, geom, hit, i, info_window, options, display;
 
-    // Clear old map drawings
-    cleanup();
+    // Display no. of results in results panel
+    $('#result-count').html(hits.length)
 
     // only need to pass to truncate filter if map is displaying region north/south of 70N/S
     var mapBounds = gmap.getBounds();
@@ -228,8 +220,12 @@ function drawFlightTracks(gmap, hits) {
 
         // Construct info window
         info_window = createInfoWindow(hit);
+
         info_windows.push(info_window);
     }
+
+    // Put results in the results panel
+    $('#results-rows').append(createResultPanel(hits))
 
     for (i = 0; i < geometries.length; i += 1) {
         google.maps.event.addListener(geometries[i], 'click',
@@ -247,9 +243,15 @@ function drawFlightTracks(gmap, hits) {
                     getQuickLook(info_windows[i], i);
                     info_windows[i].open(gmap, null);
 
-                    window.setTimeout(function () {
-                        addBoundsChangedListener(gmap);
+                    $('.result-selected').removeClass('result-selected')
+                    $("#result_" + i).addClass('result-selected')
+
+                    $('#results-rows').animate({
+                        scrollTop: $('#results-rows').scrollTop() + $("#result_" + i).offset().top - 180
                     }, 1000);
+
+                    highlightGeometry(i)
+
                 };
             })(i));
     }
@@ -259,32 +261,39 @@ function drawFlightTracks(gmap, hits) {
 function cleanup() {
     // removes all map objects
     var i;
+
+    // Remove satellite scene polygons
     for (i = 0; i < geometries.length; i += 1) {
         geometries[i].setMap(null);
     }
     geometries = [];
 
+    // Clear info windows
     for (i = 0; i < info_windows.length; i += 1) {
         info_windows[i].close();
     }
     info_windows = [];
     quicklooks = [];
 
+    // Clear Results Panel
+    $('#results-rows').html('')
+    $('#result-count').html('')
 }
 
-function redrawMap(gmap, add_listener) {
+function redrawMap(gmap) {
     var full_text, request;
 
+    openSidenav()
+    $('.sidenav a[href="#results-pane"]').tab('show')
+
+
+    // Clear old map drawings and data
+    cleanup()
+
     // Draw flight tracks
-    // full_text = $('#ftext').val();
     request = createElasticsearchRequest(gmap.getBounds(), full_text, REQUEST_SIZE);
     sendElasticsearchRequest(request, updateMap, gmap);
 
-    if (add_listener === true) {
-        window.setTimeout(function () {
-            addBoundsChangedListener(gmap);
-        }, 1000);
-    }
 }
 
 function updateMap(response, gmap) {
@@ -307,30 +316,64 @@ function updateMap(response, gmap) {
     }
 }
 
-function addBoundsChangedListener(gmap) {
+function openSidenav() {
+    closeNoAdjust()
+    var map_container = $('#map-container')
+    $('.sidenav').width('30%')
+    map_container.width('70%')
+    map_container.addClass('floatright')
+    $('#key').css('left', 'calc(30vw + 10px)')
 
-    google.maps.event.addListenerOnce(gmap, 'bounds_changed', function () {
-
-        if (window.rectangle === undefined)
-            redrawMap(gmap, true);
-    });
+    // Resize google map
+    google.maps.event.trigger(glomap, "resize");
 }
 
 
-// ----------------------------- First Load --------------------------------
+$('#search').click(function () {
+    openSidenav();
 
-$('#applyfil').one('click', function(){
-    // When the user clicks apply filters for the first time. Make the map responsive.
-    addBoundsChangedListener(glomap)
-});
+    // Explore data should just open the side panel unless it is on the about section in which case it should open
+    if ($('.sidenav #about-tab').hasClass('active')) {
+        $('.sidenav a[href="#search-pane"]').tab('show')
+    }
+})
+
+
+$('#about').click(function () {
+    openSidenav()
+    $('.sidenav a[href="#about-pane"]').tab('show')
+
+})
+
+$('.closebtn').click(function () {
+    var map_container = $('#map-container')
+    $('.sidenav').width(0)
+    map_container.width('100vw')
+    map_container.removeClass('floatright')
+    $('#key').css('left', '10px')
+
+    // Resize google map
+    google.maps.event.trigger(glomap, "resize");ß
+})
+
+function closeNoAdjust() {
+    $('.sidenav').width(0)
+}
+
+
+
+$('#collapse_temporal').on('show.bs.collapse', function () {
+    sendHistogramRequest()
+})
+
 
 // ------------------------------window.unload---------------------------------
 
 
-    // makes sure that the drawing tool is always off on page load.
-    window.unload = function() {
-        document.getElementById$('polygon_draw').checked = false
-    };
+// makes sure that the drawing tool is always off on page load.
+window.unload = function () {
+    document.getElementById$('polygon_draw').checked = false
+};
 
 // ------------------------------window.onload---------------------------------
 
@@ -338,26 +381,18 @@ window.onload = function () {
     var geocoder, lat, lon, map;
 
 
-
     // Google Maps geocoder and map object
     geocoder = new google.maps.Geocoder();
     map = new google.maps.Map(
-        document.getElementById('map-container').getElementsByClassName('map')[0],
+        document.getElementById('map'),
         {
-            mapTypeId: google.maps.MapTypeId.TERRAIN,
+            mapTypeId: google.maps.MapTypeId.SATELLITE,
             zoom: 3,
         }
     );
     glomap = map
 
     centreMap(map, geocoder, 'Lake Balaton, Hungary');
-    google.maps.event.addListener(map, 'mousemove', function (event) {
-        // Add listener to update mouse position
-        // see: http://bit.ly/1zAfter
-        lat = event.latLng.lat().toFixed(2);
-        lon = event.latLng.lng().toFixed(2);
-        $('#mouse').html('Lat: ' + lat + ', Lng: ' + lon);
-    });
 
     // set map key colours
     $('#sentinel1Key').css('border-color', COLOUR_MAP['sentinel1']);
@@ -365,6 +400,45 @@ window.onload = function () {
     $('#sentinel3Key').css('border-color', COLOUR_MAP['sentinel3']);
     $('#landsatKey').css('border-color', COLOUR_MAP['landsat']);
     $('#otherKey').css('border-color', COLOUR_MAP['other']);
+
+    drawingManager = new google.maps.drawing.DrawingManager({
+        drawingControl: false,
+        drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: ['circle', 'polygon', 'rectangle']
+        },
+        circleOptions: {
+            fillColor: '#ffff00',
+            fillOpacity: 0.1,
+            strokeWeight: 5,
+            clickable: true,
+            editable: true,
+            draggable: true,
+            zIndex: 1
+        },
+        polygonOptions: {
+            fillColor: '#ffff00',
+            fillOpacity: 0.1,
+            strokeWeight: 5,
+            clickable: true,
+            editable: true,
+            draggable: true,
+            zIndex: 1
+        },
+        rectangleOptions: {
+            fillColor: '#ffff00',
+            fillOpacity: 0.1,
+            strokeWeight: 5,
+            clickable: true,
+            editable: true,
+            draggable: true,
+            zIndex: 1
+        }
+    });
+    drawingManager.setMap(map);
+
+
+    google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingComplete)
 
 
     // Open welcome modal
@@ -394,20 +468,6 @@ window.onload = function () {
         }
     );
 
-    $('#ftext').keypress(
-        function (e) {
-            var charcode = e.charCode || e.keyCode || e.which;
-            if (charcode === 13) {
-                if (window.rectangle !== undefined) {
-                    queryRect(map);
-                } else {
-                    redrawMap(map, false);
-                }
-                return false;
-            }
-        }
-    );
-
     $('#location').keypress(
         function (e) {
             var charcode = e.charCode || e.keyCode || e.which;
@@ -423,7 +483,7 @@ window.onload = function () {
             if (window.rectangle !== undefined) {
                 queryRect(map);
             } else {
-                redrawMap(map, false);
+                redrawMap(map);
             }
         }
     );
@@ -434,8 +494,8 @@ window.onload = function () {
             $('#start_time').val('');
             $('#end_time').val('');
             $('#ftext').val('');
-            if (window.rectangle !== undefined) {
-                clearRect();
+            if (window.drawing !== undefined) {
+                clearDrawings();
             }
 
             // Clear the map of objects and initialise the tree to clear the badges.
@@ -446,10 +506,10 @@ window.onload = function () {
             // Check all the options in the tree and make sure they are selected.
             // Checked state has to match selected state.
             if (tree_menu.treeview('getUnselected').length > 0) {
-                tree_menu.treeview('checkAll', { silent: true})
+                tree_menu.treeview('checkAll', {silent: true})
                 var unselected = tree_menu.treeview('getUnselected'), i;
-                for (i = 0; i < unselected.length; i++){
-                    tree_menu.treeview('selectNode', [ unselected[i].nodeId, {silent: true}])
+                for (i = 0; i < unselected.length; i++) {
+                    tree_menu.treeview('selectNode', [unselected[i].nodeId, {silent: true}])
                 }
             }
 
@@ -458,7 +518,6 @@ window.onload = function () {
 
         }
     );
-
 
 
     //----------------------------- UI Widgets -------------------------------
@@ -484,24 +543,8 @@ window.onload = function () {
     });
 
 
-    // Draw histogram
-    sendHistogramRequest();
-
-    // Add rectangle toggle listener
-    $('#polygon_draw').change(rectToolToggle)
-
-
     //---------------------------- Map main loop ------------------------------
-    google.maps.event.addListenerOnce(map, 'bounds_changed', function () {
-        // init Tree
-        var bounds, tmp_ne, tmp_sw, nw, se, request;
 
-        bounds = map.getBounds();
-        tmp_ne = bounds.getNorthEast();
-        tmp_sw = bounds.getSouthWest();
-        nw = [tmp_sw.lng().toString(), tmp_ne.lat().toString()];
-        se = [tmp_ne.lng().toString(), tmp_sw.lat().toString()];
+    sendElasticsearchRequest(treeRequest(), initTree, false);
 
-        sendElasticsearchRequest(treeRequest(), initTree, false);
-    });
 };

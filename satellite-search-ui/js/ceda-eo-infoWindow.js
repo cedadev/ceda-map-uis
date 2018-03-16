@@ -87,7 +87,8 @@ function createInfoWindow(hit) {
             opacity: '1', // by default the close button has an opacity of 0.7
             right: '75px', top: '18px', // button repositioning
             'border-radius': '13px', // circular effect
-            'box-shadow': '0 0 5px #3990B9' // 3D effect to highlight the button
+            'box-shadow': '0 0 5px #3990B9', // 3D effect to highlight the button
+            cursor: 'pointer'
         });
 
         // The API automatically applies 0.7 opacity to the button after the mouseout event.
@@ -108,7 +109,7 @@ function getQuickLook(info_window, i) {
 
     if (quicklooks[i] !== '-') {
         // There is a quicklook in the archive
-        var quicklook = "<img class='quicklook' src='" + quicklooks[i] + "' alt='Data quicklook image' onclick='displayquicklookModal(" + i + ")' onerror='imgError(this)'> ";
+        var quicklook = "<a href='" + quicklooks[i] +"' target='_blank'><img class='quicklook' src='" + quicklooks[i] + "' alt='Data quicklook image' onerror='imgError(this)'> </a>";
 
     } else {
         // There is no quicklook image in the archive

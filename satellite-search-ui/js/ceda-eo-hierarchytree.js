@@ -144,19 +144,19 @@ function childSelectToggle(method, children, gmap) {
     var tree_menu = $('#tree_menu'), child, i;
 
     // Don't trigger redrawMap() until the last child is toggled
-    redraw_pause = true;
+    // redraw_pause = true;
 
     for (i = 0; i < children.length; i++) {
         // if(i === children.length -1){redraw_pause=false}
         child = children[i];
         tree_menu.treeview(method, [child])
     }
-    if (window.rectangle !== undefined) {
-        queryRect(gmap)
-    } else {
-        redrawMap(gmap, true)
-    }
-    redraw_pause = false;
+    // if (window.rectangle !== undefined) {
+    //     queryRect(gmap)
+    // } else {
+    //     redrawMap(gmap, true)
+    // }
+    // redraw_pause = false;
 }
 
 function siblingState(node) {
@@ -191,13 +191,13 @@ function updateTreeDisplay(aggregatedData, gmap) {
         showTags: true,
         onNodeSelected: function (event, data) {
             tree_menu.treeview('checkNode', [data.nodeId, {silent: true}]);
-            if (!redraw_pause) {
-                if (window.rectangle !== undefined) {
-                    queryRect(gmap)
-                } else {
-                    redrawMap(gmap, true)
-                }
-            }
+            // if (!redraw_pause) {
+            //     if (window.rectangle !== undefined) {
+            //         queryRect(gmap)
+            //     } else {
+            //         redrawMap(gmap, true)
+            //     }
+            // }
 
             if (siblingState(data.nodeId)) {
                 tree_menu.treeview('checkNode', [0, {silent: true}]);
@@ -210,13 +210,13 @@ function updateTreeDisplay(aggregatedData, gmap) {
         },
         onNodeUnselected: function (event, data) {
             tree_menu.treeview('uncheckNode', [data.nodeId, {silent: true}]);
-            if (!redraw_pause) {
-                if (window.rectangle !== undefined) {
-                    queryRect(gmap)
-                } else {
-                    redrawMap(gmap, true)
-                }
-            }
+            // if (!redraw_pause) {
+            //     if (window.rectangle !== undefined) {
+            //         queryRect(gmap)
+            //     } else {
+            //         redrawMap(gmap, true)
+            //     }
+            // }
 
             if (siblingState(data.nodeId)) {
                 tree_menu.treeview('checkNode', [0, {silent: true}]);
@@ -231,13 +231,13 @@ function updateTreeDisplay(aggregatedData, gmap) {
             if (data.text !== "Satellites") {
                 tree_menu.treeview('selectNode', [data.nodeId]);
 
-                 if (!redraw_pause) {
-                    if (window.rectangle !== undefined) {
-                        queryRect(gmap)
-                    } else {
-                        redrawMap(gmap, true)
-                    }
-                }
+                //  if (!redraw_pause) {
+                //     if (window.rectangle !== undefined) {
+                //         queryRect(gmap)
+                //     } else {
+                //         redrawMap(gmap, true)
+                //     }
+                // }
 
             } else {
                 tree_menu.treeview('selectNode', [data.nodeId, {silent: true}]);
@@ -248,13 +248,13 @@ function updateTreeDisplay(aggregatedData, gmap) {
         onNodeUnchecked: function (event, data) {
             if (data.text !== "Satellites") {
                 tree_menu.treeview('unselectNode', [data.nodeId]);
-                if (!redraw_pause) {
-                    if (window.rectangle !== undefined) {
-                        queryRect(gmap)
-                    } else {
-                        redrawMap(gmap, true)
-                    }
-                }
+                // if (!redraw_pause) {
+                //     if (window.rectangle !== undefined) {
+                //         queryRect(gmap)
+                //     } else {
+                //         redrawMap(gmap, true)
+                //     }
+                // }
 
             } else {
                 tree_menu.treeview('unselectNode', [data.nodeId, {silent: true}]);

@@ -134,11 +134,6 @@ function updateDownloadPaths(response) {
 }
 
 
-
-
-
-
-
 // ---------------------------------------------------------------------
 // --------------------     'Loading' Modal     ------------------------
 // ---------------------------------------------------------------------
@@ -155,26 +150,3 @@ function loading() {
     loading_blk.css("display", loading_blk.css("display") === 'none' ? 'block' : 'none');
 }
 
-// ---------------------------------------------------------------------
-// -----------------------  'Quicklook' Modal   ------------------------
-// ---------------------------------------------------------------------
-
-function displayquicklookModal(i) {
-    // set quicklook image
-    $('#modal-quicklook-image').attr('src', quicklooks[i]);
-
-    // set modal title to data filename
-    var title = $(info_windows[i].getContent()).find("#iw-title").first().attr('title');
-    title = title.replace(/^<strong>.+<\/strong>/g, '');
-    $('#file_nameQL').html(title);
-
-    var $loading = $('#quicklook_modal');
-    $loading.modal()
-
-}
-
-//Display the unavailable.png image in place of the broken image icon.
-$('#quicklook_modal').on('hidden.bs.modal', function () {
-    $('#modal-quicklook-image').attr('onerror', 'imgError(this)')
-
-});

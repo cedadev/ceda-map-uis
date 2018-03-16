@@ -61,7 +61,7 @@ function drawHistogram(request) {
         chart: {
             type: 'column',
             height: 200,
-            width: document.getElementById('filter').offsetWidth * 0.75
+            width: document.getElementById('parameter-accordian').offsetWidth * 0.75
         },
         title: {
             text: ''
@@ -100,7 +100,6 @@ function drawHistogram(request) {
                             $('#start_time').datepicker('setDate', start_date);
                             $('#end_time').datepicker('setDate', end_date);
 
-                            $('#applyfil').trigger('click')
                         }
                     }
                 }

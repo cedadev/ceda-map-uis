@@ -112,23 +112,6 @@ function treeRequest() {
     };
 }
 
-function requestFromFilters(full_text) {
-    var i, ft, req;
-
-    req = [];
-    if (full_text.length > 0) {
-        ft = full_text.split(' ');
-        for (i = 0; i < ft.length; i += 1) {
-            req.push({
-                term: {
-                    _all: ft[i].toLowerCase()
-                }
-            });
-        }
-        return req;
-    }
-}
-
 function createElasticsearchRequest(gmaps_corners, full_text, size, drawing) {
     var i, end_time, tmp_ne, tmp_sw, nw,
         se, start_time, request, temporal, tf, vars;
@@ -152,14 +135,6 @@ function createElasticsearchRequest(gmaps_corners, full_text, size, drawing) {
 
     // ElasticSearch request
     request = esRequest(size);
-
-    // Add other filters from page to query
-    // tf = requestFromFilters(full_text);
-    // if (tf) {
-    //     for (i = 0; i < tf.length; i += 1) {
-    //         request.query.filtered.filter.bool.must.push(tf[i]);
-    //     }
-    // }
 
     // Add geo_spatial filters to search
     // First check to see if the search window crosses the date line
