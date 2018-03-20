@@ -25,6 +25,10 @@ a {
     background-color: transparent;
 }
 
+.nav-tabs>li>a{
+    color: white;
+}
+
 .navbar-nav>li>a{
     color: white;
 }
@@ -66,10 +70,10 @@ a {
     color: #f6f6f6;
     top: 70px;
     left: 0;
-    background-color: #0a0d15;
+    background-color: #2d3e4f;
     transition: 0.5s;
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: scroll;
 }
 
 .scrollable{

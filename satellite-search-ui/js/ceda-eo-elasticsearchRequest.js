@@ -72,19 +72,6 @@ function esRequest(size) {
     };
 }
 
-function geo_shapeQuery(envelope) {
-    // Abstraction function to build the geo_shape query
-    return {
-        "geo_shape": {
-            "spatial.geometries.search": {
-                "shape": {
-                    "type": "envelope",
-                    "coordinates": envelope
-                }
-            }
-        }
-    }
-}
 
 function treeRequest() {
     // Abstracts the actual request from the main active code
@@ -112,46 +99,177 @@ function treeRequest() {
     };
 }
 
-function createElasticsearchRequest(gmaps_corners, full_text, size, drawing) {
+
+function geo_shapeRectangleQuery(envelope) {
+    // Abstracts different query syntax for envelope search
+    return {
+        "geo_shape": {
+            "spatial.geometries.search": {
+                "shape": {
+                    "type": "envelope",
+                    "coordinates": envelope
+                }
+            }
+        }
+    }
+}
+
+function geo_shapePolygonQuery(path) {
+    // Abstracts different query syntax for polygon search
+    return {
+        "geo_shape": {
+            "spatial.geometries.search": {
+                "shape": {
+                    "type": "polygon",
+                    "coordinates": path
+                }
+            }
+        }
+    }
+}
+
+function splitDatelinePolygon(path) {
+    // Where crosses the dateline splits polygon into 2 segments. This does produce inaccurate results if the user
+    // draws a shape which cuts back accross but this use case is considered too edge to try to rectify at this stage.
+    //
+    // Example:
+    // The | represents the dateline.
+    // Some of the indentation detail is lost after clipping
+    //
+    // This shape:
+    //
+    //                   WEST          EAST
+    //                           |
+    //                   xxxxxxxxxxxxxxxxxxxxx
+    //                       x   |           x
+    //                           x           x
+    //                           |   x       x
+    //                           x           x
+    //                       x   |           x
+    //                   xxxxxxxxxxxxxxxxxxxxx
+    //                           |
+    //
+    // Becomes two shapes:
+    //                   WEST                     EAST
+    //                           |           |
+    //                   xxxxxxxxx           xxxxxxxxxxxxx
+    //                       x   x           x           x
+    //                           x           x           x
+    //                           x           x           x
+    //                           x           x           x
+    //                       x   x           x           x
+    //                   xxxxxxxxx           xxxxxxxxxxxxx
+    //                           |           |
+
+    path = path[0]
+    var query = [];
+
+    var bbox = getNWSE(drawing.overlay.getBounds())
+
+    if (datelineCheck(bbox[0][0], bbox[1][0])) {
+
+        // Split polygon east/west of the dateline
+        var east = [];
+        var west = [];
+
+        for (var i = 0; i < path.length; i++) {
+            var lng_tmp;
+            var lng = path[i][0];
+            var lat = path[i][1];
+
+            if (lng < 0) {
+                // Create values for the western polygon. If lng < 0. The Point is east of the dateline and needs to be
+                // wrapped as if it continues past 180 from the west.
+                lng_tmp = 180 + (180 + lng);
+                west.push([lng_tmp, lat]);
+
+                // Push the unchaged coordinates to the other side
+                east.push([lng, lat])
+
+            } else if (lng > 0) {
+                // Create values for the eastern polygon. If lng > 0. The Point is west of the dateline and needs to be
+                // wrapped as if it continues past -180 from the east.
+                lng_tmp = -180 - (180 - lng);
+                east.push([lng_tmp, lat]);
+
+                // Push the unchaged coordinates to the other side
+                west.push([lng, lat])
+            }
+        }
+
+        query.push(geo_shapePolygonQuery([east]));
+        query.push(geo_shapePolygonQuery([west]));
+    } else {
+        query.push(geo_shapePolygonQuery(path))
+    }
+
+    return query
+}
+
+function splitDatelineRectangle(bounds) {
+    var query = []
+    var nw = bounds[0]
+    var se = bounds[1]
+
+    if (datelineCheck(nw[0], se[0])) {
+        // We have crossed the date line, need to split the search area into two.
+        query.push(geo_shapeRectangleQuery([nw, [180, se[1]]]));
+        query.push(geo_shapeRectangleQuery([[-180, nw[1]], se]));
+
+    } else {
+        // Not crossing the date line so can just use the search area.
+        query.push(geo_shapeRectangleQuery(bounds));
+    }
+
+    return query
+}
+
+function getNWSE(bounds) {
+    // Input Google Maps bounds object and return NW and SE array lng, lat formatted
+    var tmp_ne = bounds.getNorthEast();
+    var tmp_sw = bounds.getSouthWest();
+    var nw = [tmp_sw.lng(), tmp_ne.lat()];
+    var se = [tmp_ne.lng(), tmp_sw.lat()];
+    return [nw, se]
+}
+
+function getGeoShapeQuery(gmaps_corners) {
+
+    if (window.drawing) {
+        var bounds = getShapeBounds();
+
+        switch (drawing.type) {
+            case 'rectangle':
+                query = splitDatelineRectangle(bounds);
+                break;
+
+            case 'polygon':
+                query = splitDatelinePolygon(bounds);
+                break;
+        }
+
+    } else {
+        var mapboundary = getNWSE(gmaps_corners)
+        var query = splitDatelineRectangle(mapboundary);
+    }
+
+    return query
+
+}
+
+function createElasticsearchRequest(gmaps_corners, full_text, size) {
     var i, end_time, tmp_ne, tmp_sw, nw,
         se, start_time, request, temporal, tf, vars;
-
-    // Present loading modal
-    if (!export_modal_open) {
-        displayLoadingModal()
-    }
-
-    if (drawing) {
-        nw = gmaps_corners[0];
-        se = gmaps_corners[1]
-    }
-    else {
-
-        tmp_ne = gmaps_corners.getNorthEast();
-        tmp_sw = gmaps_corners.getSouthWest();
-        nw = [tmp_sw.lng().toString(), tmp_ne.lat().toString()];
-        se = [tmp_ne.lng().toString(), tmp_sw.lat().toString()];
-    }
 
     // ElasticSearch request
     request = esRequest(size);
 
     // Add geo_spatial filters to search
-    // First check to see if the search window crosses the date line
-    var envelope_corners = []
-    if (datelineCheck(nw[0], se[0])) {
-        // We have crossed the date line, need to send the search area into two.
-        envelope_corners.push([nw, [180, se[1]]])
-        envelope_corners.push([[-180, nw[1]], se])
-
-    } else {
-        // Not crossing the date line so can just use the search area.
-        envelope_corners.push([nw, se])
-    }
+    var geoshapequeries = getGeoShapeQuery(gmaps_corners)
 
     // Push the geoshape conditions to the main request.
-    for (i = 0; i < envelope_corners.length; i++) {
-        request.query.bool.filter.bool.should.push(geo_shapeQuery(envelope_corners[i]));
+    for (i = 0; i < geoshapequeries.length; i++) {
+        request.query.bool.filter.bool.should.push(geoshapequeries[i]);
     }
 
     // Tree selection filters.

@@ -45,7 +45,7 @@ function displayDrawingBounds(){
     // Returns [[NW], [SE]] bounds array
     var bounds
 
-    bounds = drawing.getBounds()
+    bounds = drawing.overlay.getBounds()
     var ne = bounds.getNorthEast();
     var sw = bounds.getSouthWest();
 
@@ -58,25 +58,60 @@ function drawingComplete(event){
     var bounds
 
     if (window.drawing) {
-        drawing.setMap(null)
+        drawing.overlay.setMap(null)
     }
 
-    window.drawing = event.overlay
+    window.drawing = event
 
-    console.log(displayDrawingBounds())
+    displayDrawingBounds()
+
+    drawing.overlay.addListener('bounds_changed', displayDrawingBounds)
 
 }
 
 function clearDrawings(){
-    window.drawing.setMap(null)
+    window.drawing.overlay.setMap(null)
     window.drawing = undefined
     $('#NW').html('');
     $('#SE').html('');
 }
 
 
+function getShapeBounds(){
+    var bounds;
+    var shape_array = []
 
+    switch (drawing.type) {
+        // case 'circle':
+        //     console.log(drawing.type)
+        //     var centre = drawing.overlay.getCenter()
+        //     shape_array.push([centre.lng(),centre.lat()],drawing.overlay.getRadius())
+        //     break;
+        case 'polygon':
+            console.log(drawing.type)
+            bounds = drawing.overlay.getPath().getArray()
+            for (var i in bounds){
+                shape_array.push([bounds[i].lng(),bounds[i].lat()])
+            }
+            // Close the shape by adding the first point again.
+            shape_array.push([bounds[0].lng(),bounds[0].lat()])
+            shape_array = [shape_array]
+            break;
+        case 'rectangle':
+            console.log(drawing.type)
+            bounds = drawing.overlay.getBounds()
+            var ne = bounds.getNorthEast()
+            var sw = bounds.getSouthWest()
 
+            var nw = [sw.lng(),ne.lat()]
+            var se = [ne.lng(), sw.lat()]
+            shape_array = [nw, se]
+
+            break;
+    }
+
+    return shape_array
+}
 
 
 // function rectBounds() {

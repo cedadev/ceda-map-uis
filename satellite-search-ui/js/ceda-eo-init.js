@@ -37,6 +37,10 @@ var COLOUR_MAP = {
 var lastGeom = null
 var export_modal_open = false;
 
+function numberWithCommas(x){
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 // -----------------------------------String-----------------------------------
 String.prototype.hashCode = function () {
     // Please see: http://bit.ly/1dSyf18 for original
@@ -177,7 +181,7 @@ function drawFlightTracks(gmap, hits) {
     var colour_index, geom, hit, i, info_window, options, display;
 
     // Display no. of results in results panel
-    $('#result-count').html(hits.length)
+    // $('#result-count').html(hits.length)
 
     // only need to pass to truncate filter if map is displaying region north/south of 70N/S
     var mapBounds = gmap.getBounds();
@@ -301,6 +305,8 @@ function updateMap(response, gmap) {
         // Update "hits" and "response time" fields
         $('#resptime').html(response.took);
         $('#numresults').html(response.hits.total);
+        $('#result-count').html(response.hits.hits.length + '/' + numberWithCommas(response.hits.total))
+
 
         // Draw flight tracks on a map
         drawFlightTracks(gmap, response.hits.hits);
@@ -405,17 +411,17 @@ window.onload = function () {
         drawingControl: false,
         drawingControlOptions: {
             position: google.maps.ControlPosition.TOP_CENTER,
-            drawingModes: ['circle', 'polygon', 'rectangle']
+            drawingModes: ['polygon', 'rectangle']
         },
-        circleOptions: {
-            fillColor: '#ffff00',
-            fillOpacity: 0.1,
-            strokeWeight: 5,
-            clickable: true,
-            editable: true,
-            draggable: true,
-            zIndex: 1
-        },
+        // circleOptions: {
+        //     fillColor: '#ffff00',
+        //     fillOpacity: 0.1,
+        //     strokeWeight: 5,
+        //     clickable: true,
+        //     editable: true,
+        //     draggable: true,
+        //     zIndex: 1
+        // },
         polygonOptions: {
             fillColor: '#ffff00',
             fillOpacity: 0.1,

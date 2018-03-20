@@ -27,7 +27,7 @@ function createResultPanel(hits) {
                 view.thumbnail_link = 'http://data.ceda.ac.uk' + hit.file.path.truncatePath(1) + '/' + hit.file.quicklook_file
             }
             else {
-                view.thumbnail_link = '-'
+                view.thumbnail_link = 'img/no_preview.png'
             }
 
             if (hit.file.location === "on_disk") {
@@ -50,11 +50,7 @@ function createResultPanel(hits) {
 }
 
 $('#refresh').click(function () {
-    if (window.rectangle !== undefined) {
-        queryRect(glomap)
-    } else {
-        redrawMap(glomap, true)
-    }
+    $('#applyfil').trigger('click')
 })
 
 function highlightGeometry(index){
