@@ -10,13 +10,7 @@
 $('#raw_json').click(
     function () {
         loading();
-        var req;
-        if (window.rectangle !== undefined) {
-            req = createElasticsearchRequest(rectBounds(), $('#ftext').val(), REQUEST_SIZE, true);
-
-        } else {
-            req = createElasticsearchRequest(map.getBounds(), $('#ftext').val(), REQUEST_SIZE);
-        }
+        var req = createElasticsearchRequest(glomap.getBounds(), REQUEST_SIZE);
         sendElasticsearchRequest(req, updateRawJSON);
     }
 );
@@ -24,13 +18,7 @@ $('#raw_json').click(
 $('#file_paths').click(
     function () {
         loading();
-        var req;
-        if (window.rectangle !== undefined) {
-            req = createElasticsearchRequest(rectBounds(), $('#ftext').val(), REQUEST_SIZE, true);
-
-        } else {
-            req = createElasticsearchRequest(map.getBounds(), $('#ftext').val(), REQUEST_SIZE);
-        }
+        var req = createElasticsearchRequest(glomap.getBounds(), REQUEST_SIZE);
         sendElasticsearchRequest(req, updateFilePaths);
     }
 );
@@ -38,13 +26,7 @@ $('#file_paths').click(
 $('#dl_urls').click(
     function () {
         loading();
-        var req;
-        if (window.rectangle !== undefined) {
-            req = createElasticsearchRequest(rectBounds(), $('#ftext').val(), REQUEST_SIZE, true);
-
-        } else {
-            req = createElasticsearchRequest(map.getBounds(), $('#ftext').val(), REQUEST_SIZE);
-        }
+        var req = createElasticsearchRequest(glomap.getBounds(), REQUEST_SIZE);
         sendElasticsearchRequest(req, updateDownloadPaths);
     }
 );
@@ -74,7 +56,7 @@ function sleep(miliseconds) {
 
 function updateExportResultsModal(hits) {
     loading();
-    $('#results').html(JSON.stringify(hits, null, '    '));
+    $('#results-export').html(JSON.stringify(hits, null, '    '));
 }
 
 $('#copy').click(function (event) {
@@ -133,20 +115,8 @@ function updateDownloadPaths(response) {
     updateExportResultsModal(paths);
 }
 
-
-// ---------------------------------------------------------------------
-// --------------------     'Loading' Modal     ------------------------
-// ---------------------------------------------------------------------
-
-function displayLoadingModal() {
-    var $loading = $('#loading_modal');
-    $loading.css("display", $loading.css("display") === 'none' ? 'block' : 'none');
-
-}
-
 // loading gif inside export modal
 function loading() {
-    var loading_blk = $('.loading_block');
-    loading_blk.css("display", loading_blk.css("display") === 'none' ? 'block' : 'none');
+    $('#results-export').html('Loading...')
 }
 

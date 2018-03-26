@@ -25,6 +25,7 @@ function createResultPanel(hits) {
 
             if (hit.file.quicklook_file) {
                 view.thumbnail_link = 'http://data.ceda.ac.uk' + hit.file.path.truncatePath(1) + '/' + hit.file.quicklook_file
+                view.local_thumbnail = 'img/thumbnails/' + hit.file.quicklook_file
             }
             else {
                 view.thumbnail_link = 'img/no_preview.png'

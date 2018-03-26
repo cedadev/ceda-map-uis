@@ -17,7 +17,7 @@ function getParameterByName(name) {
 // Window constants
 var REQUEST_SIZE = 250;
 var INDEX = getParameterByName('index') || 'ceda-eo';
-var ES_URL = 'http://jasmin-es1.ceda.ac.uk/' + INDEX + '/_search';
+var ES_URL = 'http://jasmin-es1.ceda.ac.uk:9000/' + INDEX + '/_search';
 var TRACK_COLOURS = [
     '#B276B2', '#5DA5DA', '#FAA43A',
     '#60BD68', '#F17CB0', '#B2912F',
@@ -37,8 +37,8 @@ var COLOUR_MAP = {
 var lastGeom = null
 var export_modal_open = false;
 
-function numberWithCommas(x){
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 // -----------------------------------String-----------------------------------
@@ -194,7 +194,7 @@ function drawFlightTracks(gmap, hits) {
 
     // Reverse the "hits" array because the ES response is ordered new - old and we want to draw the newest items on top.
     hits.reverse();
-
+    updateProgress('Drawing Results...', 90)
     for (i = 0; i < hits.length; i += 1) {
         hit = hits[i];
         hit = hits[i];
@@ -227,7 +227,7 @@ function drawFlightTracks(gmap, hits) {
 
         info_windows.push(info_window);
     }
-
+    updateProgress('Complete', 100)
     // Put results in the results panel
     $('#results-rows').append(createResultPanel(hits))
 
@@ -259,8 +259,15 @@ function drawFlightTracks(gmap, hits) {
                 };
             })(i));
     }
+    $('#loading').hide()
 }
 
+
+function updateProgress(text, percentage) {
+    $('#loading-text').html(text)
+    $('.progress-bar').width(percentage + '%')
+    $('.progress-bar').html(percentage + '%')
+}
 
 function cleanup() {
     // removes all map objects
@@ -295,7 +302,9 @@ function redrawMap(gmap) {
     cleanup()
 
     // Draw flight tracks
-    request = createElasticsearchRequest(gmap.getBounds(), full_text, REQUEST_SIZE);
+    request = createElasticsearchRequest(gmap.getBounds(), REQUEST_SIZE);
+
+    updateProgress('Sending Request...', 20)
     sendElasticsearchRequest(request, updateMap, gmap);
 
 }
@@ -311,10 +320,8 @@ function updateMap(response, gmap) {
         // Draw flight tracks on a map
         drawFlightTracks(gmap, response.hits.hits);
 
-        // Toggle loading modal
-        if (!export_modal_open) {
-            displayLoadingModal()
-        }
+        // $("img.lazyload").lazyload();
+
     }
     if (response.aggregations) {
         // Generate variable aggregation on map and display
@@ -359,13 +366,12 @@ $('.closebtn').click(function () {
     $('#key').css('left', '10px')
 
     // Resize google map
-    google.maps.event.trigger(glomap, "resize");ß
+    google.maps.event.trigger(glomap, "resize");
 })
 
 function closeNoAdjust() {
     $('.sidenav').width(0)
 }
-
 
 
 $('#collapse_temporal').on('show.bs.collapse', function () {
@@ -486,11 +492,8 @@ window.onload = function () {
 
     $('#applyfil').click(
         function () {
-            if (window.rectangle !== undefined) {
-                queryRect(map);
-            } else {
-                redrawMap(map);
-            }
+            $('#loading').show()
+            redrawMap(map);
         }
     );
 
@@ -554,3 +557,4 @@ window.onload = function () {
     sendElasticsearchRequest(treeRequest(), initTree, false);
 
 };
+

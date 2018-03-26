@@ -1,23 +1,8 @@
-html {
+/* Global */
+
+#main {
+    width: 100%;
     height: 100%;
-}
-
-.floatright{
-    float: right;
-    transition: 0.5s;
-}
-
-body {
-    height: 100%;
-    margin: 0px;
-    padding: 0px;
-    padding-top: 70px;
-    background-color: #2d3e4f;
-}
-
-.navbar{
-    height: 70px;
-    background-color: #2d3e4f;
 }
 
 a {
@@ -25,21 +10,41 @@ a {
     background-color: transparent;
 }
 
-.nav-tabs>li>a{
-    color: white;
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+    padding-top: 70px;
+    background-color: #2d3e4f;
+}
+
+/* Nav bar */
+
+.navbar{
+    height: 70px;
+    background-color: #2d3e4f;
 }
 
 .navbar-nav>li>a{
     color: white;
 }
+
 .navbar-nav>li>a:hover{
     color: #18bc9c;
     background-color: transparent;
+    cursor: pointer;
 }
 
 .navbar-brand{
     height: 70px;
     padding: 5px 15px;
+}
+
+.navbar-brand>img {
+    height: 100%;
 }
 
 .navbar-nav{
@@ -50,120 +55,11 @@ a {
     color: #e6e6e6
 }
 
-.nav-tabs>li>a:hover{
-    background-color: transparent;
-}
+/* Map */
 
-#search{
-    cursor: pointer;
-}
-
-.result-selected{
-    border-color: #e50925!important;
-    border-width: 6px!important;
-}
-
-.sidenav {
-    height: 100%;
-    width: 0;
-    position: fixed;
-    color: #f6f6f6;
-    top: 70px;
-    left: 0;
-    background-color: #2d3e4f;
+.floatright{
+    float: right;
     transition: 0.5s;
-    overflow-x: hidden;
-    overflow-y: scroll;
-}
-
-.scrollable{
-    height: 100vh;
-    overflow-y: scroll;
-}
-
-
-.sidenav a:hover {
-    color: white;
-}
-
-.sidenav .closebtn {
-    position: absolute;
-    top: 0;
-    right: 25px;
-    font-size: 36px;
-    margin-left: 50px;
-    text-decoration: none;
-    cursor: pointer;
-    color: whitesmoke;
-    line-height: 30px;
-}
-
-
-.panel-body{
-    color: black;
-}
-
-.location-icon{
-    position: absolute;
-    height: 20px;
-    width: 20px;
-    bottom: 20px;
-    right: 16px;
-}
-
-/*@media screen and (max-height: 450px) {*/
-  /*.sidenav {padding-top: 15px;}*/
-  /*.sidenav a {font-size: 18px;}*/
-/*}*/
-
-
-textarea {
-    resize: none;
-    width: 100%;
-    height: 100%;
-    min-height: 100px;
-}
-
-div .wide {
-    width: 100%;
-}
-
-div .logo {
-    max-height: 8vh;
-    max-width: 45%;
-}
-
-.buffer {
-    margin-top: 10px;
-}
-
-.pad {
-    padding-left: 3vw;
-    padding-right: 3vw;
-}
-
-.form-horizontal {
-    text-align: center;
-    margin-left: 5%;
-    width: 90%;
-}
-
-/*
- * This is to left-align elements within the Variable Filter
- * and works on the "multiselect" element.
- */
-.ms-elem-selectable {
-    text-align: left;
-}
-
-#main {
-    width: 100%;
-    height: 100%;
-}
-
-#sidebar {
-    position: relative;
-    max-height: 100%;
 }
 
 #map {
@@ -175,55 +71,7 @@ div .logo {
     width: 100vw;
 }
 
-
-/* Loading Modal CSS */
-.load-modal {
-    display: none; /* Hidden by default */
-    position: absolute; /* Stay in place */
-    z-index: 2; /* Sit on top */
-    left: 30vw;
-    top: 0;
-    width: 70vw; /* Full width */
-    height: 100%; /* Full height */
-    /*overflow: auto; !* Enable scroll if needed *!*/
-    background-color: rgb(0, 0, 0); /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-    animation: fadeEffect;
-    animation-duration: 0.2s;
-    animation-delay: 1s;
-}
-
-@keyframes fadeEffect {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.modal-dialog.load {
-    top: 40vh !important;
-    width: 30% !important;
-}
-
-/* Quicklook Modal CSS */
-.modal-dialog.zoom {
-    width: 85vh !important;
-}
-
-#modal-quicklook-image {
-    width: 80vh;
-    border: solid 1px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-#main_load {
-    height: 10vh;
-    max-width: 80%;
-}
+/* Google Maps info window */
 
 .gm-style-iw {
     max-height: 300px !important;
@@ -269,74 +117,110 @@ div .logo {
     padding-left: 0px !important;
 }
 
+/* Side nav */
+
+.sidenav {
+    height: calc(100% - 70px) ;
+    width: 0;
+    position: absolute;
+    color: #f6f6f6;
+    top: 70px;
+    left: 0;
+    background-color: #2d3e4f;
+    transition: 0.5s;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.scrollable{
+    height: 100%;
+    overflow-y: scroll;
+}
+
+.sidenav a:hover {
+    color: white;
+}
+
+.sidenav .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+    text-decoration: none;
+    cursor: pointer;
+    color: whitesmoke;
+    line-height: 30px;
+}
+
+.nav-tabs>li>a{
+    color: white;
+}
+
+.nav-tabs>li>a:hover{
+    background-color: transparent;
+}
+
+/* Search Filters Panel */
+
 .eightypc {
     width: 82% !important;
 }
 
-/* Map tools CSS */
-.tools {
+.form-horizontal {
+    text-align: center;
+    margin-left: 5%;
+    width: 90%;
+}
+
+#collapse_tree .list-group {
+-moz-box-shadow: none;
+-webkit-box-shadow: none;
+box-shadow: none;
+margin-bottom: 0;
+}
+
+/* Results Panel */
+
+.result-selected{
+    border-color: #e50925!important;
+    border-width: 6px!important;
+}
+
+.location-icon{
     position: absolute;
-    right: 50px;
-    top: 10px;
-    z-index: 1;
-    background-color: white;
-    padding: 3px;
-    border-radius: 3px;
-    width: 185px;
-    height: 40px;
+    height: 20px;
+    width: 20px;
+    bottom: 20px;
+    right: 16px;
 }
 
-.vertical {
-    display: inline-block !important;
-    line-height: 40px;
-}
-
-#polygon-instructions {
-    position: absolute;
-    top: 50px;
-    right: 45px;
-    max-width: 300px;
-
-}
-
-/* Export modal loading animation */
-.loading_block {
-    display: none;
-    position: absolute;
-    left: 16px;
-    top: 110px;
-    background-color: rgba(255, 255, 255, 0.63);
-    width: 95%;
-    height: 50%;
-
-}
-
-.loading_img {
-    height: 100%;
-
-}
+/* Export panel */
 
 #copy {
     position: absolute;
     right: 16px;
-    top: 110px;
+    top: 200px;
     color: white;
 }
 
+textarea {
+    resize: vertical;
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+    color: black;
+}
+
+.popover{
+    color: black;
+}
+
+.panel-body{
+    color: black;
+}
+
 /* Map Key */
-.keyBox {
-    border: solid;
-    border-width: 3px;
-    background-color: rgba(0, 0, 0, 0.1);
-    width: 20px;
-}
-
-.pad-left {
-    padding-left: 20px;
-    text-align: left;
-}
-
-
 #key {
     position: absolute;
     bottom: 30px;
@@ -348,31 +232,16 @@ div .logo {
     transition: 0.5s;
 }
 
-#collapse_tree .list-group {
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-    margin-bottom: 0;
+.keyBox {
+    border: solid;
+    border-width: 3px;
+    background-color: rgba(0, 0, 0, 0.1);
+    width: 20px;
 }
 
-#welcome-infomessage {
-    border-radius: 3px;
-    padding: 5px;
-    margin-bottom: 5px;
-}
-
-/* Title text slider */
-.slider {
-	overflow-y: hidden;
-	max-height: 500px; /* approximate max height */
-
-	transition-property: all;
-	transition-duration: .5s;
-	transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
-}
-
-.slider.closed {
-	max-height: 0;
+.pad-left {
+    padding-left: 20px;
+    text-align: left;
 }
 
 
@@ -415,64 +284,3 @@ div .logo {
     cursor: pointer;
 }
 
-
-/* Rectangle tool slider */
-/* The switch - the box around the slider */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-  margin: 0;
-}
-
-/* Hide default HTML checkbox */
-.switch input {display:none;}
-
-/* The slider */
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-input:checked + .slider {
-  background-color: #2196F3;
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-
-/* Rounded sliders */
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}

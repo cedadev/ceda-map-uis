@@ -10,7 +10,7 @@ function esRequest(size) {
     // Abstracts the actual request from the main active code
     return {
         "_source": {
-            "include": [
+            "includes": [
                 "data_format.format",
                 "file.filename",
                 "file.path",
@@ -234,6 +234,8 @@ function getNWSE(bounds) {
 }
 
 function getGeoShapeQuery(gmaps_corners) {
+    // Returns an array with either length 1 or 2 depending on whether the search area crosses the date line.
+    // Searches crossing the dateline are split in two.
 
     if (window.drawing) {
         var bounds = getShapeBounds();
@@ -247,17 +249,26 @@ function getGeoShapeQuery(gmaps_corners) {
                 query = splitDatelinePolygon(bounds);
                 break;
         }
+        // If a search area relationship has been specified, insert into the query
+        var shape_relation = $('#relationship').val()
+
+        if ( shape_relation != 'default'){
+            for (i=0;i<query.length; i++){
+                query[i].geo_shape["spatial.geometries.search"].relation = shape_relation
+            }
+        }
 
     } else {
         var mapboundary = getNWSE(gmaps_corners)
         var query = splitDatelineRectangle(mapboundary);
     }
 
+
     return query
 
 }
 
-function createElasticsearchRequest(gmaps_corners, full_text, size) {
+function createElasticsearchRequest(gmaps_corners, size) {
     var i, end_time, tmp_ne, tmp_sw, nw,
         se, start_time, request, temporal, tf, vars;
 
@@ -281,6 +292,7 @@ function createElasticsearchRequest(gmaps_corners, full_text, size) {
         }
     }
 
+    // Temporal filters
     temporal = {
         range: {
             'temporal.start_time': {}
@@ -302,6 +314,16 @@ function createElasticsearchRequest(gmaps_corners, full_text, size) {
         request.query.bool.filter.bool.must.push(temporal);
     }
 
+    // Availability filter
+    var availability = $('#availability')
+    if (availability.val() != 'default'){
+        request.query.bool.filter.bool.must.push({
+            "term": {
+                "file.location.keyword": availability.val()
+            }
+        })
+    }
+    console.log(JSON.stringify(request))
     return request;
 }
 

@@ -29,7 +29,7 @@
         <div class="container-fluid">
             <div class="navbar-header">
                 <a class="navbar-brand" href="http://ceda.ac.uk">
-                    <img alt="Brand" src="./img/ceda_logo_white.png" style="height: 100%">
+                    <img alt="Brand" src="./img/ceda_logo_white.png">
                 </a>
             </div>
 
@@ -109,13 +109,18 @@
                         Results
                     </a>
                 </li>
+                <li role="presentation">
+                    <a href="#export-pane" aria-controls="export-pane" role="tab" data-toggle="tab">
+                        Export Results
+                    </a>
+                </li>
             </ul>
 
 
             <!-- Tab panes -->
             <div class="tab-content">
                 <div role="tabpanel" class="tab-pane active" id="about-pane">
-                    <div class="container-fluid scrollable">
+                    <div class="container-fluid">
                         <a href="javascript:void(0)" class="closebtn">&times;</a>
                         <h2>Satellite Data Finder</h2>
                         <p>Search for scenes and scans from a range of Earth Observation data sets held in the CEDA
@@ -217,7 +222,15 @@
                                 <div id="collapse_spatial" class="panel-collapse collapse">
                                     <div class="panel-body">
                                         <p>Use the tools at the top of the map to draw shapes to define a search area.
-                                        <h5>Shape Bounding Box</h5>
+                                            Changing the result relationship will determin whether scenes are returned
+                                            which fall outside the boundary of the shape defines.</p>
+                                        <label>Result Relationship:</label>
+                                        <select id="relationship" style="width: 100%">
+                                            <option value="default">Intersect</option>
+                                            <option value="within">Within</option>
+                                        </select>
+                                        <br>
+                                        <label>Shape Bounding Box</label>
                                         <p><b>NW:</b><span id="NW"></span></p>
                                         <p><b>SE:</b><span id="SE"></span></p>
                                         <div style="text-align: center">
@@ -245,6 +258,30 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordions"
+                                           href="#collapse_availability">
+                                            Availability Filter
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse_availability" class="panel-collapse collapse">
+                                    <div class="text-center panel-body">
+                                        <p>Scenes stored on disk are immediately accessible. Any scenes stored on tape
+                                            can be requested to be put temporarily on disk using the <a
+                                                    href="https://help.ceda.ac.uk/article/265-nla">NLA</a>.
+                                        </p>
+                                        <select id="availability" style="width: 100%">
+                                            <option value="default">All</option>
+                                            <option value="on_disk">On Disk</option>
+                                            <option value="on_tape">On Tape</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
 
@@ -264,20 +301,69 @@
                                 class="btn btn-primary" id="refresh"><span
                                 class="glyphicon glyphicon-refresh">&nbsp;<strong>Refresh</strong></span></btn></span>
                         </h2>
+                        <p>Displays the top 250 results. These are ordered newest to oldest. Click refresh after
+                            changing the view area or filters to retrieve an updated list.</p>
+                        <div id="loading" style="text-align: center; display: none;">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+                                     aria-valuemax="100" style="min-width: 2em;">
+                                    0%
+                                </div>
+                            </div>
+                            <h4 id="loading-text">Generating Request...</h4>
+                        </div>
 
                         <div class="scrollable" id="results-rows"></div>
+                    </div>
+
+                </div>
+                <div role="tabpanel" class="tab-pane " id="export-pane">
+                    <div class="container-fluid">
+                        <a href="javascript:void(0)" class="closebtn">&times;</a>
+                        <h2>Export Results</h2>
+                        <div>
+                            <div class="text-center" style="margin-bottom: 10px">
+                                <p><b>Note</b>: Only the first 250 results will be returned. These are taken
+                                    preferentially with the most recent datasets first</p>
+                                <button type="button" class="btn btn-primary" id="raw_json">Raw JSON</button>
+                                <button type="button" class="btn btn-primary" id="file_paths">File Paths</button>
+                                <button type="button" class="btn btn-primary" id="dl_urls">Download URLs</button>
+                            </div>
+                            <div>
+                                <button id="copy" class="btn-xs btn-primary glyphicon glyphicon-copy"
+                                        data-toggle="popover"
+                                        data-content="Copied!"></button>
+                                <textarea id="results-export" placeholder="Results will appear here..."
+                                          readonly></textarea>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
             </div>
         </div>
 
+        <!-- Data coverage modal -->
+        <div id="coverage_modal" class="modal">
+
+            <!-- The Close Button -->
+            <span class="imgclose" onclick="$('#coverage_modal').modal('hide')">&times;</span>
+
+            <!-- Modal Content (The Image) -->
+            <img class="coverage-modal-content zoom" id="dataset-coverage-image">
+
+            <!-- Modal Caption (Image Text) -->
+            <div id="caption" class="zoom"></div>
+        </div>
+
         <!-- Template for result panel -->
         <script id="result-panel-template" type="text/html">
             <div class="col-sm-6 col-md-4">
-                <div class="thumbnail" id="result_{{ info_window_index}}" style="border-color: {{ border_colour }}; border-width: 4px">
+                <div class="thumbnail" id="result_{{ info_window_index}}"
+                     style="border-color: {{ border_colour }}; border-width: 4px">
                     <a href="javascript:void(0)" onclick="openinfowindow({{ info_window_index }},{{ latlng }})">
-                        <img src="{{ thumbnail_link }}">
+                        <img style="width: 100%" src="{{ local_thumbnail }}" data-src="{{ thumbnail_link }}"
+                             onerror="imgError(this)">
                         <div class="caption">
                             <p><strong>Date: </strong>{{ date }}</p>
                             <p><strong>Instrument: </strong>{{ instrument }}</p>
@@ -324,6 +410,7 @@
         </script>
     </div>
 </div>
+
 
 <!-- Load Javascript files -->
 

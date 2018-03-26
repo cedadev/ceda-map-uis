@@ -125,5 +125,6 @@ function getQuickLook(info_window, i) {
 // replace the broken img icon with a custom image.
 function imgError(image) {
     image.onerror = "";
-    image.src = "./img/unavailable.png"
+    url = $(image).data('src')
+    image.src = url
 }
