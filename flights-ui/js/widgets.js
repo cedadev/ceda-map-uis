@@ -103,6 +103,19 @@ function requestFromFlightNum(){
     }
 }
 
+function requestFromCapswitch(){
+    var cs;
+    cs = $('#capswitch').val();
+    if (cs){
+        if (typeof cs == "object"){
+            return cs.split(' ');
+        }
+        else{
+            return cs;
+        }
+    }
+}
+
 function requestFromFlightPop(){
     var fpoptext;
     fpoptext = $('#fpoptext').val();
