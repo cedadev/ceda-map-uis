@@ -106,18 +106,24 @@ function datelineCheck(lng1,lng2){
 }
 
 // Currently Unused ShapeQuery Formation Function
-function geoShapeRequest(envelope) {
+function geoShapeRequest(envelope, capswitch) {
     // Abstraction function to build the geo_shape query
-    return {
+    var shape = {
+        "type": "envelope",
+        "coordinates": envelope
+    };
+    if (capswitch){
+        var gsearch = {"shape":shape,"relation": "within"};
+    } else {
+        var gsearch = {"shape": shape};
+    };
+
+    var gsq = {
         "geo_shape": {
-            "geometry.search": { // Can't do this yet
-                "shape": {
-                    "type": "envelope",
-                    "coordinates": envelope
-                }
-            }
+            "geometry.search": gsearch
         }
     }
+    return gsq;
 }
 
 function getTimeRequest(){
@@ -185,6 +191,7 @@ function createElasticsearchRequest(gmaps_corners, fpop, drawing) {
             // Not crossing the date line so can just use the search area.
             envelope_corners.push([nw, se])
         }
+        capswitch = requestFromCapswitch();
     }
     /*
     else {
@@ -253,7 +260,7 @@ function createElasticsearchRequest(gmaps_corners, fpop, drawing) {
     if (is_push){
         if (drawing){
             for (i = 0; i < envelope_corners.length; i++) {
-                request.query.bool.filter.bool.must.push(geoShapeRequest(envelope_corners[i]));
+                request.query.bool.filter.bool.must.push(geoShapeRequest(envelope_corners[i], capswitch));
             }
         }
     // Add other filters from page to query
@@ -967,6 +974,14 @@ window.onload = function () {
     // Add rectangle toggle listener
     $('#polygon_draw').change(function(){
         rectToolToggle(map)
+    })
+
+    $('#capswitch').change(function(){
+        if (window.rectangle !== undefined) {
+            queryRect(map);
+        } else {
+            redrawMap(map, false, false);
+        }
     })
 
     // 'Include photography' checkbox

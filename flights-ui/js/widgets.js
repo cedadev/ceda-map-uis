@@ -103,6 +103,10 @@ function requestFromFlightNum(){
     }
 }
 
+function requestFromCapswitch(){
+    return document.getElementById('capswitch').checked;
+}
+
 function requestFromFlightPop(){
     var fpoptext;
     fpoptext = $('#fpoptext').val();
