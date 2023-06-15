@@ -108,22 +108,22 @@ function datelineCheck(lng1,lng2){
 // Currently Unused ShapeQuery Formation Function
 function geoShapeRequest(envelope, capswitch) {
     // Abstraction function to build the geo_shape query
-    if(!capswitch){
-        capswitch = "intersect";
+    var shape = {
+        "type": "envelope",
+        "coordinates": envelope
+    };
+    if (capswitch){
+        var gsearch = {"shape":shape,"relation": "within"};
     } else {
-        capswitch = "within";
-    }
-    return {
+        var gsearch = {"shape": shape};
+    };
+
+    var gsq = {
         "geo_shape": {
-            "geometry.search": { // Can't do this yet
-                "shape": {
-                    "type": "envelope",
-                    "coordinates": envelope
-                },
-                "relation": capswitch
-            }
+            "geometry.search": gsearch
         }
     }
+    return gsq;
 }
 
 function getTimeRequest(){

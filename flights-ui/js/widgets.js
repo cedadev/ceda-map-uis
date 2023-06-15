@@ -104,16 +104,7 @@ function requestFromFlightNum(){
 }
 
 function requestFromCapswitch(){
-    var cs;
-    cs = $('#capswitch').val();
-    if (cs){
-        if (typeof cs == "object"){
-            return cs.split(' ');
-        }
-        else{
-            return cs;
-        }
-    }
+    return document.getElementById('capswitch').checked;
 }
 
 function requestFromFlightPop(){
